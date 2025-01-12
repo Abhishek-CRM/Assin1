@@ -1,0 +1,35 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Log in to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build Docker image
+      run: |
+        docker build -t myregistry.azurecr.io/crud-api:latest .
+
+    - name: Push Docker image
+      run: |
+        echo "${{ secrets.ACR_PASSWORD }}" | docker login myregistry.azurecr.io --username ${{ secrets.ACR_USERNAME }} --password-stdin
+        docker push myregistry.azurecr.io/crud-api:latest
+
+    - name: Deploy to AKS
+      run: |
+        kubectl apply -f k8s-deployment.yml
