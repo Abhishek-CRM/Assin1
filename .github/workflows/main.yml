@@ -1,30 +1,40 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline for CRUD API
 
+# Trigger the workflow when code is pushed to the main branch
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
+# Define the jobs to run
 jobs:
-  build-and-push:
-    name: Build and Push Docker Image
+  build-and-push-docker:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    # Step 1: Checkout the repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
+    # Step 2: Set up Docker
+    - name: Set up Docker
       uses: docker/setup-buildx-action@v2
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v4
+    # Step 3: Log in to DockerHub
+    - name: Log in to DockerHub
+      uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
+    # Step 4: Build and push the Docker image
     - name: Build and push Docker image
-      run: |
-        docker build -t username/my-flask-api:latest .
-        docker push username/my-flask-api:latest
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/crud-api:latest
 
